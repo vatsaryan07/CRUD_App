@@ -32,7 +32,7 @@ The application exposes a RESTful API for managing tasks. Here's an overview of 
 | /login | POST | Login with email and password (returns JWT token) |
 | /tasks/ | GET | Fetch all the tasks |
 | /tasks/create | POST | Create a new task |
-| /tasks/update | POST | Edit details of a specific task |
+| /tasks/update | PUT | Edit details of a specific task |
 | /tasks/delete | DELETE | Delete a task |
 
 **Request/Response Format:**
