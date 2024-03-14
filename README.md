@@ -26,12 +26,14 @@ The application exposes a RESTful API for managing tasks. Here's an overview of 
 
 | Endpoint | Method | Description |
 |---|---|---|
-| /users | POST | Create a new user account |
+| /users/ | GET | View all user accounts |
+| /users/create | POST | Create a new user account |
+| /users/tasks/ | GET | View user tasks |
 | /login | POST | Login with email and password (returns JWT token) |
-| /tasks | POST | Create a new task |
-| /tasks/{id} | GET | Get details of a specific task |
-| /tasks/{id} | PUT | Edit an existing task |
-| /tasks/{id} | DELETE | Delete a task |
+| /tasks/ | GET | Fetch all the tasks |
+| /tasks/create | POST | Create a new task |
+| /tasks/update | POST | Edit details of a specific task |
+| /tasks/delete | DELETE | Delete a task |
 
 **Request/Response Format:**
 
