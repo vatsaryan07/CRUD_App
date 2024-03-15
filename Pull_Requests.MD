@@ -4,4 +4,5 @@ Merging the final version of the frontend with backend and initial chatbot: [Pul
 ## Second Pull Request
 Merging the chatbot with the already existing frontend and backend: [Pull Request #2](https://github.com/vatsaryan07/CRUD_App/pull/2)
 
+## Repository Activity
 Activity of the entire repository: [Link](https://github.com/vatsaryan07/CRUD_App/activity)
