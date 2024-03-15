@@ -13,7 +13,7 @@ This project implements a to-do list application with AI capabilities to manage 
     * Edit existing tasks
     * Delete tasks
 * **LLMQuery:**
-    * Query the chatbot for assistance using LLM (Large Language Model)
+    * Query the chatbot for assistance
 
 ### Authentication
 
