@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react'; // Import useState and useEffect
 import { JSONTree } from 'react-json-tree';
+import Markdown from 'react-markdown'
 
 // function JSONTable({ jsonData }) {
 //     if (!isJSON(jsonData)) {
@@ -216,7 +217,7 @@ export function Home(){
                 <h1>Chatbot</h1>
                 <div className="chatbot-container">
                     <div className="chatbot-messages">
-                        {botResponse && <div className="bot-message">{(botResponse )}</div>}
+                        {botResponse && <div className="bot-message"><Markdown>{(botResponse )}</Markdown></div>}
                     </div>
                     <div className="chatbot-input">
                         <input

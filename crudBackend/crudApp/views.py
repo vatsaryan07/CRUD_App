@@ -13,11 +13,10 @@ from rest_framework.views import APIView
 import google.generativeai as genai
 import requests
 import json
-import os
 
 
 
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+genai.configure(os.getenv('GOOGLE_API_KEY'))
 model = genai.GenerativeModel('gemini-pro')
 
 # Login functionality to create the user
@@ -200,7 +199,10 @@ def make_request(json_data,headers):
 
         # Print response
         print("Response:", response.status_code)
-        return (response.text,response.status_code)
+        if response.status_code<400:
+            return (response.text,response.status_code)
+        else:
+            return (json_data.get('info'),response.status_code)
     else:
         return (" ",status.HTTP_404_NOT_FOUND)
 
@@ -250,14 +252,41 @@ class LLMQuery(APIView):
                     "taskid": <GIVEN_TASK_ID>
                 }
 
+            
             Given this input, decide which call to make and give me the answer as a dict as follows.
-            Make sure all dates are in a format like '2024-03-14T17:17:00Z'
-
+            Make sure all dates are in a format like '2024-03-14T17:17:00Z'. If I need additional information for the 
+            query to succeed, tell me in info, otherwise leave it blank. It is important to have all info 
             {
             "url" : "<CHOSEN_URL>",
-            "method" : "<METHOD>"
-            "body" : "<BODY>"
+            "method" : "<METHOD>",
+            "body" : "<BODY>",
+            "info" : "<message containing what additional info I need" OR " ""
             }
+            
+            If I don't have the necessary information, tell me in info. Don't make up information. 
+            
+            Example calls : 
+            
+            /api/tasks/create (all are required)
+            {
+                "taskname": "Sample Task Name",
+                "due_date": "2024-03-14T17:17:00Z",
+                "priority": 1
+            }
+            
+            /api/tasks/update (we only require one other field apart from taskid. taskid is required)
+            {
+                "taskname": "Old Task modified Yeet",
+                "taskid": 567,
+                "user": 2,
+                "due_date": "2024-03-14T17:17:00Z"
+            }
+            
+            /api/tasks/delete (only taskid required)
+            {
+                "taskid": 1
+            }
+            
             Input : 
             """
             prompt = init_prompt + self.request.data['input']
@@ -275,10 +304,17 @@ class LLMQuery(APIView):
             print(resp.text)
             print("REACHED HERE")
             print(apicall)
-            if apicall[1] >= 400:
-                print("HUMAN UNDERSTANDABLE")
-                resp = model.generate_content("Make this human understandable"+str(apicall[0]))
-                return Response({"message":resp.text})
-            return Response({"message":apicall[0]})
+            # if apicall[1] >= 400:
+            #     print("HUMAN UNDERSTANDABLE")
+            #     resp = model.generate_content("Make this human understandable"+str(apicall[0]))
+            #     return Response({"message":resp.text})
+            print(llm_out)
+            details = model.generate_content("Convey success message for the following API call in Markdown, talk about the task and taskname if available. Be concise but thorough : "+str(llm_out))
+            print(details.text)
+            # if apicall[1] < 400 and llm_out['method'] == 'DELETE':
+            #     print("HERE")
+            return Response({"message":details.text})
         except:
+            print("in except")
+            print(apicall[1])
             return Response({ "error":"No User Found" } ,status = status.HTTP_408_REQUEST_TIMEOUT)
