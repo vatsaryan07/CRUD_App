@@ -10,6 +10,11 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+import google.generativeai as genai
+
+
+genai.configure(api_key='AIzaSyCOjJfuJHOZcamVp2iokM6bgOunCHkKdtE')
+model = genai.GenerativeModel('gemini-pro')
 
 # Login functionality to create the user
 class RegistrationAPIView(APIView):
@@ -36,6 +41,24 @@ class UserList(generics.ListAPIView):
     serializer_class = UserSerializer
     http_method_names = ['get']
 
+class UserProfile(generics.ListAPIView):
+    
+    queryset = Task.objects.all()
+    serializer_class = UserSerializer
+    # user_serl
+    
+    def get(self,request,*args,**kwargs):
+        
+        try:
+            user = self.request.user
+            
+            data = self.serializer_class(user)
+            print(data['first_name'])
+            return Response(data['first_name'].value + ' ' + data['last_name'].value)
+        except:
+
+            return Response({ "error":"No User Found" } ,status = status.HTTP_404_NOT_FOUND)
+
 # Preliminary User Create, REDUNDANT
 class UserCreate(generics.CreateAPIView):
     
@@ -59,6 +82,7 @@ class TaskList(generics.ListAPIView):
     
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
     http_method_names = ['get']
 
 # List all tasks for the particular user
@@ -74,10 +98,9 @@ class TaskForUser(generics.ListAPIView):
             user = self.request.user
             
             data = self.serializer_class(user)
-            
+            print(data['first_name'])
             return Response(data['tasks'].value)
         except:
-
             return Response({ "error":"No User Found" } ,status = status.HTTP_404_NOT_FOUND)
         
 # Create a task for the user (or through superuser)
@@ -148,4 +171,54 @@ class TaskDelete(generics.DestroyAPIView):
         else:
             return Response({"error": "You are not authorized to delete this task"}, status=status.HTTP_403_FORBIDDEN)        
     
+class LLMQuery(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+    
+    def post(self,request,*args,**kwargs):
+        try:
+            user = self.request.user
+            print(self.request)
+            init_prompt = """
+            I can make four API calls.
+            A GET call for yielding the tasks available to the user
+            URL : /api/users/tasks/
+            No Body
 
+            A POST call for creating the tasks for the user
+            URL : /api/tasks/create
+            Body : {
+                    "taskname": <GIVEN_TASKNAME>,
+                    "due_date": <GIVEN_DUE_DATE_IN_ISO_FORMAT>,
+                    "priority": <GIVEN_PRIORITY>
+                    }
+
+            A PUT call for editing the tasks for the user
+            URL : /api/tasks/update
+            Body : {
+                    "taskname": <GIVEN_TASKNAME>,
+                    "due_date": <GIVEN_DUE_DATE_IN_ISO_FORMAT>,
+                    "priority": <GIVEN_PRIORITY>
+                    }
+
+            A DELETE call for deleting the task associated with the id
+            URL : /api/tasks/delete
+            Body : {
+                    "taskid": <GIVEN_TASK_ID>
+                }
+
+            Given this input, decide which call to make and give me the answer as a dict as follows
+
+            {
+            url : <CHOSEN_URL>
+            body : <BODY>
+            }
+            Input : 
+            """
+            prompt = init_prompt + self.request.data['input']
+            print(prompt)
+            resp = model.generate_content(prompt)
+            # print(resp.text)
+            return Response({"message":resp.text})
+        except:
+            return Response({ "error":"No User Found" } ,status = status.HTTP_404_NOT_FOUND)
