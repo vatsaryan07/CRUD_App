@@ -75,8 +75,10 @@ export function Home() {
 
     return (
         <div className="container">
-            <h1>Hi {username}</h1>
-
+            <h1 className="welcome-header">Welcome to the CRUD App, {username}!</h1>
+            <p className="instructions">
+            You can view your tasks here, query the chatbot to modify, update or delete your tasks. At the same time you can also go to the View tab to view all users and tasks.
+             </p>
             <div className="task-details">
                 <h2>Task Details:</h2>
                 <table className="user-table">
