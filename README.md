@@ -7,10 +7,13 @@ This project implements a to-do list application with AI capabilities to manage 
 * **User Management:**
     * Create an account
     * Login with email and password (JWT token based authentication)
+    * View user profile
 * **Task Management:**
     * Create new tasks
     * Edit existing tasks
     * Delete tasks
+* **LLMQuery:**
+    * Query the chatbot for assistance
 
 ### Authentication
 
@@ -20,6 +23,14 @@ This project implements a to-do list application with AI capabilities to manage 
 
 ### Getting Started
 
+#### How to Use
+
+1. Add your Google API key to the `views.py` file in the `crudApp` folder (to be replaced by an environment file soon).
+2. Run `npm install` in the `crudfrontend` folder.
+3. Create a Conda environment (or any virtual environment) in `crudBackend` using the `requirements.txt`.
+4. Run the server using `python manage.py runserver`.
+5. Run the frontend using `npm start`.
+
 ### API Documentation
 
 The application exposes a RESTful API for managing tasks. Here's an overview of the endpoints:
@@ -28,12 +39,14 @@ The application exposes a RESTful API for managing tasks. Here's an overview of 
 |---|---|---|
 | /users/ | GET | View all user accounts |
 | /users/create | POST | Create a new user account |
+| /users/view | GET | View user profile |
 | /users/tasks/ | GET | View user tasks |
 | /login | POST | Login with email and password (returns JWT token) |
 | /tasks/ | GET | Fetch all the tasks |
 | /tasks/create | POST | Create a new task |
 | /tasks/update | PUT | Edit details of a specific task |
 | /tasks/delete | DELETE | Delete a task |
+| /llmquery | POST | Query the chatbot |
 
 **Request/Response Format:**
 
@@ -41,7 +54,7 @@ The application exposes a RESTful API for managing tasks. Here's an overview of 
 
 **Authentication:**
 
-* Include the JWT token in the Authorization header of all requests except for `/users` and `/login`.
+* Include the JWT token in the Authorization header of all requests except for `/users`, `/login`, `/users/view`, and `/llmquery`.
 
 **Authorization:**
 
