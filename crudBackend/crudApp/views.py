@@ -15,7 +15,9 @@ import requests
 import datetime
 import json
 
-genai.configure(os.getenv('GOOGLE_API_KEY'))
+# Sample key for use : 'AIzaSyDoq3vTbnObsbeh_6zJh1R3RloVP78rxxE'
+# env_key = 'AIzaSyDoq3vTbnObsbeh_6zJh1R3RloVP78rxxE'
+genai.configure(api_key=env_key)
 model = genai.GenerativeModel('gemini-pro')
 
 # Login functionality to create the user

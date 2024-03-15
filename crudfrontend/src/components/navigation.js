@@ -17,6 +17,7 @@ export function Navigation() {
           {isAuth ? <Nav.Link href="/Home">Home</Nav.Link> : null}
             <Nav.Link href="/login">Login</Nav.Link>
             <Nav.Link href="/register">Register</Nav.Link>
+            <Nav.Link href="/view">View</Nav.Link>
           </Nav>
         </Navbar>
        </div>
