@@ -11,9 +11,13 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 import google.generativeai as genai
+import requests
+import json
+import os
 
 
-genai.configure(api_key='AIzaSyCOjJfuJHOZcamVp2iokM6bgOunCHkKdtE')
+
+genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
 model = genai.GenerativeModel('gemini-pro')
 
 # Login functionality to create the user
@@ -118,7 +122,8 @@ class TaskCreate(generics.CreateAPIView):
         try:
             user = User.objects.get(id=user)
         except User.DoesNotExist:
-            return Response({ "error":"No User Found" } ,status = status.HTTP_404_NOT_FOUND)
+            user = self.request.user
+            # return Response({ "error":"No User Found" } ,status = status.HTTP_404_NOT_FOUND)
         
         if user != self.request.user and not self.request.user.is_superuser:
             
@@ -142,8 +147,8 @@ class TaskUpdate(generics.UpdateAPIView):
 
         if task.user == request.user or request.user.is_superuser:
             
-            if task.return_owner() != User.objects.get(id=request.data['user']) and not request.user.is_superuser:
-                return Response({"error": "You are not authorized to reassign tasks"}, status=status.HTTP_403_FORBIDDEN)
+            # if task.return_owner() != User.objects.get(id=request.data['user']) and not request.user.is_superuser:
+            #     return Response({"error": "You are not authorized to reassign tasks"}, status=status.HTTP_403_FORBIDDEN)
             
             serializer = self.get_serializer(task, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
@@ -171,6 +176,42 @@ class TaskDelete(generics.DestroyAPIView):
         else:
             return Response({"error": "You are not authorized to delete this task"}, status=status.HTTP_403_FORBIDDEN)        
     
+    
+
+def make_request(json_data,headers):
+    url = json_data.get('url')
+    method = json_data.get('method')
+    body = json_data.get('body')
+    print("In make request")
+    print(url)
+    print(method)
+    if url and method:
+        
+        if method.upper() == 'GET':
+            response = requests.get(f'http://localhost:8000{url}', headers=headers, params=body)
+        elif method.upper() == 'POST':
+            response = requests.post(f'http://localhost:8000{url}', headers=headers, json=body)
+        elif method.upper() == 'PUT':
+            response = requests.put(f'http://localhost:8000{url}', headers=headers, json=body)
+        elif method.upper() == 'DELETE':
+            response = requests.delete(f'http://localhost:8000{url}', headers=headers, json=body)
+        else:
+            raise ValueError("Unsupported HTTP method")
+
+        # Print response
+        print("Response:", response.status_code)
+        return (response.text,response.status_code)
+    else:
+        return (" ",status.HTTP_404_NOT_FOUND)
+
+def is_json(text):
+    try:
+        json.loads(text)
+        return True
+    except ValueError:
+        return False
+    
+    
 class LLMQuery(APIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserSerializer
@@ -178,12 +219,12 @@ class LLMQuery(APIView):
     def post(self,request,*args,**kwargs):
         try:
             user = self.request.user
-            print(self.request)
+            print(self.request.headers)
             init_prompt = """
             I can make four API calls.
             A GET call for yielding the tasks available to the user
             URL : /api/users/tasks/
-            No Body
+            No Body (give me an empty string for this)
 
             A POST call for creating the tasks for the user
             URL : /api/tasks/create
@@ -196,29 +237,48 @@ class LLMQuery(APIView):
             A PUT call for editing the tasks for the user
             URL : /api/tasks/update
             Body : {
+                    "taskid" : <GIVEN_TASKID>,
                     "taskname": <GIVEN_TASKNAME>,
                     "due_date": <GIVEN_DUE_DATE_IN_ISO_FORMAT>,
                     "priority": <GIVEN_PRIORITY>
                     }
-
+            Body only needs to contain the fields that are to be updated and the taskid
+            
             A DELETE call for deleting the task associated with the id
             URL : /api/tasks/delete
             Body : {
                     "taskid": <GIVEN_TASK_ID>
                 }
 
-            Given this input, decide which call to make and give me the answer as a dict as follows
+            Given this input, decide which call to make and give me the answer as a dict as follows.
+            Make sure all dates are in a format like '2024-03-14T17:17:00Z'
 
             {
-            url : <CHOSEN_URL>
-            body : <BODY>
+            "url" : "<CHOSEN_URL>",
+            "method" : "<METHOD>"
+            "body" : "<BODY>"
             }
             Input : 
             """
             prompt = init_prompt + self.request.data['input']
-            print(prompt)
+            # print(prompt)
             resp = model.generate_content(prompt)
-            # print(resp.text)
-            return Response({"message":resp.text})
+            llm_out = resp.text
+            print(llm_out)
+            print(is_json(llm_out))
+            apicall = ""
+            if is_json(llm_out):
+                out = json.loads(llm_out)
+                print("JSON",out)
+                print("API CALL")
+                apicall = make_request(out,self.request.headers)
+            print(resp.text)
+            print("REACHED HERE")
+            print(apicall)
+            if apicall[1] >= 400:
+                print("HUMAN UNDERSTANDABLE")
+                resp = model.generate_content("Make this human understandable"+str(apicall[0]))
+                return Response({"message":resp.text})
+            return Response({"message":apicall[0]})
         except:
-            return Response({ "error":"No User Found" } ,status = status.HTTP_404_NOT_FOUND)
+            return Response({ "error":"No User Found" } ,status = status.HTTP_408_REQUEST_TIMEOUT)

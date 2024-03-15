@@ -1,9 +1,76 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react'; // Import useState and useEffect
+import { JSONTree } from 'react-json-tree';
 
+// function JSONTable({ jsonData }) {
+//     if (!isJSON(jsonData)) {
+//         return <div>Invalid JSON</div>;
+//     }
+
+//     const data = JSON.parse(jsonData);
+//     const keys = Object.keys(data[0]);
+
+//     return (
+//         <table>
+//             <thead>
+//                 <tr>
+//                     {keys.map((key, index) => (
+//                         <th key={index}>{key}</th>
+//                     ))}
+//                 </tr>
+//             </thead>
+//             <tbody>
+//                 {data.map((item, index) => (
+//                     <tr key={index}>
+//                         {keys.map((key, i) => (
+//                             <td key={i}>{item[key]}</td>
+//                         ))}
+//                     </tr>
+//                 ))}
+//             </tbody>
+//         </table>
+//     );
+// }
+
+// function isJSON(str) {
+//     try {
+//         JSON.parse(str);
+//     } catch (e) {
+//         return false;
+//     }
+//     return true;
+// }
 
 export function Home(){
     const [taskDataList, setTaskDataList] = useState([]);
+
+    const renderData = (inputData) => {
+        try {
+          const parsedData = JSON.parse(inputData);
+          const tableHeaders = Object.keys(parsedData);
+    
+          return (
+            <table>
+              <thead>
+                <tr>
+                  {tableHeaders.map((header) => (
+                    <th key={header}>{header}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {tableHeaders.map((header) => (
+                    <td key={header}>{parsedData[header]}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          );
+        } catch (error) {
+          return <p>inputData</p>;
+        }
+      };
 
     useEffect(() => {
         const fetchTaskData = async () => {
@@ -11,6 +78,8 @@ export function Home(){
                 console.log(axios.defaults.headers.common['Authorization'])
                 const response = await axios.get('http://localhost:8000/api/users/tasks/',{headers: {Authorization:'Bearer '+localStorage.getItem('access_token')}});
                 setTaskDataList(response.data);
+                console.log("TASK")
+                console.log(response.data)
             } catch (error) {
                 console.error('Error fetching task data:', error);
             }
@@ -40,7 +109,9 @@ export function Home(){
         const fetchUserData = async () => {
             try {
                 const response = await axios.get('http://localhost:8000/api/users/view',{headers: {Authorization:'Bearer '+localStorage.getItem('access_token')}});
+                // console.log("TASK")
                 setUserName(response.data); // Update state with user data list
+                // console.log(response.data)
             } catch (error) {
                 console.error('Error fetching user data:', error);
             }
@@ -71,6 +142,7 @@ export function Home(){
             console.log(response)
             setBotResponse(response.data['message']); // Update state with bot's response
             console.log(botResponse)
+            console.log(JSON.stringify(botResponse))
         } catch (error) {
             console.error('Error sending message:', error);
             // Handle error here, such as displaying an error message to the user
@@ -78,7 +150,9 @@ export function Home(){
     };
 
     return(
-        <><div className="container">
+        <>
+            <h1> Hi {username}</h1>
+        {/* <div className="container">
             <h1> Hi {username}</h1>
             <h1>User Details:</h1>
             <table className="user-table">
@@ -112,7 +186,8 @@ export function Home(){
                     ))}
                 </tbody>
             </table>
-        </div><div className="container">
+        </div> */}
+        <div className="container">
                 <h1>Task Details:</h1>
                 <table className="user-table">
                     <thead>
@@ -141,7 +216,7 @@ export function Home(){
                 <h1>Chatbot</h1>
                 <div className="chatbot-container">
                     <div className="chatbot-messages">
-                        {botResponse && <div className="bot-message">{botResponse}</div>}
+                        {botResponse && <div className="bot-message">{(botResponse )}</div>}
                     </div>
                     <div className="chatbot-input">
                         <input

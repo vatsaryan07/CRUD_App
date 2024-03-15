@@ -102,7 +102,7 @@ class User(AbstractUser,PermissionsMixin):
 # Task class with the database setup
 class Task(models.Model):
     taskname = models.TextField(blank=False)
-    taskid = models.IntegerField(primary_key = True)
+    taskid = models.AutoField(primary_key = True)
     user = models.ForeignKey('crudApp.User',related_name = "tasks", on_delete=models.CASCADE,default = 0)
     due_date = models.DateTimeField(blank=False)
     priority = models.IntegerField(blank=False)
