@@ -12,9 +12,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 import google.generativeai as genai
 import requests
+import datetime
 import json
-
-
 
 genai.configure(os.getenv('GOOGLE_API_KEY'))
 model = genai.GenerativeModel('gemini-pro')
@@ -219,7 +218,6 @@ class LLMQuery(APIView):
     serializer_class = UserSerializer
     
     def post(self,request,*args,**kwargs):
-        try:
             user = self.request.user
             print(self.request.headers)
             init_prompt = """
@@ -254,14 +252,18 @@ class LLMQuery(APIView):
 
             
             Given this input, decide which call to make and give me the answer as a dict as follows.
-            Make sure all dates are in a format like '2024-03-14T17:17:00Z'. If I need additional information for the 
-            query to succeed, tell me in info, otherwise leave it blank. It is important to have all info 
-            {
+             {
             "url" : "<CHOSEN_URL>",
             "method" : "<METHOD>",
             "body" : "<BODY>",
             "info" : "<message containing what additional info I need" OR " ""
             }
+            
+            Make sure all dates are in a format like '2024-03-14T17:17:00Z'.  If I need additional information for the 
+            query to succeed, tell me in info, otherwise leave it blank. It is important to have all info.
+            
+            If my query is incomplete like "I want to delete a task" ask for follow-up information in the "info" class. 
+           
             
             If I don't have the necessary information, tell me in info. Don't make up information. 
             
@@ -287,34 +289,55 @@ class LLMQuery(APIView):
                 "taskid": 1
             }
             
-            Input : 
             """
+            
+            success_message_prompts = """
+            Example success messages : 
+            
+            Task deletion : Task with the Task ID <TASK_ID> has been deleted!
+            
+            Task updation : The task <TASK_NAME> has been updated!
+            
+            Task creation : The task <TASK_NAME> has been created with details <PRIORITY and DUE_DATE>
+            """
+            task_lookup = UserSerializer(self.request.user)['tasks'].value
+            print(task_lookup)
+            init_prompt = init_prompt + "Today's date is " + str(datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')) + "Input : "
             prompt = init_prompt + self.request.data['input']
             # print(prompt)
             resp = model.generate_content(prompt)
             llm_out = resp.text
-            print(llm_out)
-            print(is_json(llm_out))
+            # print(llm_out)
+            # print(is_json(llm_out))
             apicall = ""
             if is_json(llm_out):
                 out = json.loads(llm_out)
                 print("JSON",out)
                 print("API CALL")
                 apicall = make_request(out,self.request.headers)
-            print(resp.text)
-            print("REACHED HERE")
-            print(apicall)
+            else:
+                details = model.generate_content("Paraphrase this : Sorry, I was unable to understand. Could you rephrase?" ).text
+                return Response({"message":details})
+            # print(resp.text)
+            # print("REACHED HERE")
+            # print(apicall)
             # if apicall[1] >= 400:
             #     print("HUMAN UNDERSTANDABLE")
             #     resp = model.generate_content("Make this human understandable"+str(apicall[0]))
             #     return Response({"message":resp.text})
-            print(llm_out)
-            details = model.generate_content("Convey success message for the following API call in Markdown, talk about the task and taskname if available. Be concise but thorough : "+str(llm_out))
-            print(details.text)
+            # print(out)
+            if apicall[1]<400:
+                if out['method'] == 'GET':
+                    details = model.generate_content("Make this into proper markdown " + str(apicall[0])).text
+                else:
+                    details = model.generate_content("Convey success message for the following API call in Markdown, talk about the task and taskname if available. Be concise but thorough : "+str(llm_out) + success_message_prompts).text
+                print(details)
+            else:
+                print(out["info"])
+                if out["info"] != "":
+                    details = out["info"]
+                else:
+                    details = "I was unable to understand, please specify details clearly."
             # if apicall[1] < 400 and llm_out['method'] == 'DELETE':
             #     print("HERE")
-            return Response({"message":details.text})
-        except:
-            print("in except")
-            print(apicall[1])
-            return Response({ "error":"No User Found" } ,status = status.HTTP_408_REQUEST_TIMEOUT)
+            return Response({"message":details})

@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "crispy_forms",
     'crudApp',
     'corsheaders',
+    'rest_framework_swagger',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [

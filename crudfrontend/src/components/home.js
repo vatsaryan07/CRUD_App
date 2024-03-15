@@ -1,86 +1,36 @@
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useState, useEffect } from 'react'; // Import useState and useEffect
-import { JSONTree } from 'react-json-tree';
-import Markdown from 'react-markdown'
+import Markdown from 'react-markdown';
 
-// function JSONTable({ jsonData }) {
-//     if (!isJSON(jsonData)) {
-//         return <div>Invalid JSON</div>;
-//     }
-
-//     const data = JSON.parse(jsonData);
-//     const keys = Object.keys(data[0]);
-
-//     return (
-//         <table>
-//             <thead>
-//                 <tr>
-//                     {keys.map((key, index) => (
-//                         <th key={index}>{key}</th>
-//                     ))}
-//                 </tr>
-//             </thead>
-//             <tbody>
-//                 {data.map((item, index) => (
-//                     <tr key={index}>
-//                         {keys.map((key, i) => (
-//                             <td key={i}>{item[key]}</td>
-//                         ))}
-//                     </tr>
-//                 ))}
-//             </tbody>
-//         </table>
-//     );
-// }
-
-// function isJSON(str) {
-//     try {
-//         JSON.parse(str);
-//     } catch (e) {
-//         return false;
-//     }
-//     return true;
-// }
-
-export function Home(){
+export function Home() {
+    const [username, setUserName] = useState('');
     const [taskDataList, setTaskDataList] = useState([]);
+    const [message, setMessage] = useState('');
+    const [chatHistory, setChatHistory] = useState([]);
+    const [loading, setLoading] = useState(false); 
 
-    const renderData = (inputData) => {
-        try {
-          const parsedData = JSON.parse(inputData);
-          const tableHeaders = Object.keys(parsedData);
-    
-          return (
-            <table>
-              <thead>
-                <tr>
-                  {tableHeaders.map((header) => (
-                    <th key={header}>{header}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  {tableHeaders.map((header) => (
-                    <td key={header}>{parsedData[header]}</td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          );
-        } catch (error) {
-          return <p>inputData</p>;
-        }
-      };
+    useEffect(() => {
+        const fetchUsername = async () => {
+            try {
+                const response = await axios.get('http://localhost:8000/api/users/view', {
+                    headers: { Authorization: 'Bearer ' + localStorage.getItem('access_token') }
+                });
+                setUserName(response.data);
+            } catch (error) {
+                console.error('Error fetching username:', error);
+            }
+        };
+
+        fetchUsername();
+    }, []);
 
     useEffect(() => {
         const fetchTaskData = async () => {
             try {
-                console.log(axios.defaults.headers.common['Authorization'])
-                const response = await axios.get('http://localhost:8000/api/users/tasks/',{headers: {Authorization:'Bearer '+localStorage.getItem('access_token')}});
+                const response = await axios.get('http://localhost:8000/api/users/tasks/', {
+                    headers: { Authorization: 'Bearer ' + localStorage.getItem('access_token') }
+                });
                 setTaskDataList(response.data);
-                console.log("TASK")
-                console.log(response.data)
             } catch (error) {
                 console.error('Error fetching task data:', error);
             }
@@ -89,46 +39,12 @@ export function Home(){
         fetchTaskData();
     }, []);
 
-    const [userDataList, setUserDataList] = useState([]); // Initialize state to store user data list
-    useEffect(() => {
-        // Define an async function to fetch user data
-        const fetchUserData = async () => {
-            try {
-                const response = await axios.get('http://localhost:8000/api/users/');
-                setUserDataList(response.data); // Update state with user data list
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            }
-        };
-
-        fetchUserData(); // Call the async function when component mounts
-    }, []); // Empty dependency array ensures this effect runs only once on moun
-
-    const [username,setUserName] = useState([])
-    useEffect(() => {
-        // Define an async function to fetch user data
-        const fetchUserData = async () => {
-            try {
-                const response = await axios.get('http://localhost:8000/api/users/view',{headers: {Authorization:'Bearer '+localStorage.getItem('access_token')}});
-                // console.log("TASK")
-                setUserName(response.data); // Update state with user data list
-                // console.log(response.data)
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            }
-        };
-
-        fetchUserData(); // Call the async function when component mounts
-    }, []);
-
-    const [message, setMessage] = useState('');
-    const [botResponse, setBotResponse] = useState('');
-
     const handleMessageChange = (e) => {
         setMessage(e.target.value);
     };
 
     const handleSendMessage = async () => {
+        setLoading(true);
         try {
             const response = await axios.post(
                 'http://localhost:8000/api/llmquery',
@@ -136,60 +52,33 @@ export function Home(){
                 {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+                        Authorization: `Bearer ${localStorage.getItem('access_token')}`
                     }
                 }
             );
-            console.log(response)
-            setBotResponse(response.data['message']); // Update state with bot's response
-            console.log(botResponse)
-            console.log(JSON.stringify(botResponse))
+            const newChat = [...chatHistory, { type: 'user', message: message }];
+            setChatHistory(newChat);
+            setChatHistory([...newChat, { type: 'bot', message: response.data.message }]);
+            const taskResponse = await axios.get('http://localhost:8000/api/users/tasks/', {
+            headers: { Authorization: 'Bearer ' + localStorage.getItem('access_token') }
+        });
+        setTaskDataList(taskResponse.data);
+            setMessage('');
         } catch (error) {
             console.error('Error sending message:', error);
-            // Handle error here, such as displaying an error message to the user
+        } finally {
+            setLoading(false); // Set loading state to false when response received
+            setMessage('');
         }
+
     };
 
-    return(
-        <>
-            <h1> Hi {username}</h1>
-        {/* <div className="container">
-            <h1> Hi {username}</h1>
-            <h1>User Details:</h1>
-            <table className="user-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>ID</th>
-                        <th>Tasks</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {userDataList.map((userData, index) => (
-                        <tr key={index}>
-                            <td>{userData.first_name} {userData.last_name}</td>
-                            <td>{userData.email}</td>
-                            <td>{userData.id}</td>
-                            <td>
-                                <ul>
-                                    {userData.tasks.map((task, taskIndex) => (
-                                        <li key={taskIndex}>
-                                            <strong>Task Name:</strong> {task.taskname}<br />
-                                            <strong>Task ID:</strong> {task.taskid}<br />
-                                            <strong>Due Date:</strong> {task.due_date}<br />
-                                            <strong>Priority:</strong> {task.priority}
-                                        </li>
-                                    ))}
-                                </ul>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div> */}
+    return (
         <div className="container">
-                <h1>Task Details:</h1>
+            <h1>Hi {username}</h1>
+
+            <div className="task-details">
+                <h2>Task Details:</h2>
                 <table className="user-table">
                     <thead>
                         <tr>
@@ -213,25 +102,31 @@ export function Home(){
                     </tbody>
                 </table>
             </div>
-            <div className="container">
-                <h1>Chatbot</h1>
-                <div className="chatbot-container">
-                    <div className="chatbot-messages">
-                        {botResponse && <div className="bot-message"><Markdown>{(botResponse )}</Markdown></div>}
-                    </div>
-                    <div className="chatbot-input">
-                        <input
-                            type="text"
-                            value={message}
-                            onChange={handleMessageChange}
-                            placeholder="Type your message..."
-                        />
-                        <button onClick={handleSendMessage}>Send</button>
-                    </div>
+
+            <div className="chatbot-container">
+                <h2>Chatbot</h2>
+                <div className="chatbot-messages">
+                    {chatHistory.map((chat, index) => (
+                        <div key={index} className={chat.type === 'user' ? 'user-message' : 'bot-message'}>
+                            <Markdown>{chat.message}</Markdown>
+                        </div>
+                    ))}
+                    {loading && (
+                         <div className="bot-message">
+                         <div className="dot-pulse"></div>
+                     </div>
+                    )}
+                </div>
+                <div className="chatbot-input">
+                    <input
+                        type="text"
+                        value={message}
+                        onChange={handleMessageChange}
+                        placeholder="Type your message..."
+                    />
+                    <button onClick={handleSendMessage}>Send</button>
                 </div>
             </div>
-            
-            </>
-    )
-    
+        </div>
+    );
 }
