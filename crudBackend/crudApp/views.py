@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 import google.generativeai as genai
 
 
-genai.configure(api_key='AIzaSyCOjJfuJHOZcamVp2iokM6bgOunCHkKdtE')
+genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
 model = genai.GenerativeModel('gemini-pro')
 
 # Login functionality to create the user
