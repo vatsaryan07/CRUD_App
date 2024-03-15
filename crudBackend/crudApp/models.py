@@ -26,30 +26,6 @@
 #         return self.email
     
 #     def _generate_jwt_token(self):
-#         """
-#         Generates a JSON Web Token that stores this user's ID and has an expiry
-#         date set to 60 days into the future.
-#         """
-#         dt = datetime.now() + timedelta(days=60)
-
-#         token = jwt.encode({
-#             'id': self.pk,
-#             'exp': dt.utcfromtimestamp(dt.timestamp()) 
-#         }, settings.SECRET_KEY, algorithm='HS256')
-#         print("TOKENTOKENTOKEN",token.decode('utf-8'))
-#         # return token.decode('utf-8')
-        
-    
-
-# class Task(models.Model):
-#     taskname = models.TextField(blank=False)
-#     taskid = models.IntegerField(primary_key = True)
-#     user = models.ForeignKey(User,related_name = "tasks", on_delete=models.CASCADE,default = 0)
-#     due_date = models.DateTimeField(blank=False)
-#     priority = models.IntegerField(blank=False)
-
-#     def __str__(self):
-#         return self.name
 
 
 
@@ -126,7 +102,7 @@ class User(AbstractUser,PermissionsMixin):
 # Task class with the database setup
 class Task(models.Model):
     taskname = models.TextField(blank=False)
-    taskid = models.IntegerField(primary_key = True)
+    taskid = models.AutoField(primary_key = True)
     user = models.ForeignKey('crudApp.User',related_name = "tasks", on_delete=models.CASCADE,default = 0)
     due_date = models.DateTimeField(blank=False)
     priority = models.IntegerField(blank=False)
