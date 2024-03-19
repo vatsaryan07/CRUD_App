@@ -14,9 +14,9 @@ import google.generativeai as genai
 import requests
 import datetime
 import json
+import os
 
-# Sample key for use : 'AIzaSyDoq3vTbnObsbeh_6zJh1R3RloVP78rxxE'
-# env_key = 'AIzaSyDoq3vTbnObsbeh_6zJh1R3RloVP78rxxE'
+env_key = "YOUR API KEY"
 genai.configure(api_key=env_key)
 model = genai.GenerativeModel('gemini-pro')
 

@@ -97,7 +97,7 @@ export function Home() {
                                 <td>{taskData.taskname}</td>
                                 <td>{taskData.taskid}</td>
                                 <td>{taskData.user}</td>
-                                <td>{new Date(taskData.due_date).toLocaleString()}</td>
+                                <td>{new Date(taskData.due_date).toLocaleString('en-US', {timeZone: 'America/New_York'})}</td>
                                 <td>{taskData.priority}</td>
                             </tr>
                         ))}

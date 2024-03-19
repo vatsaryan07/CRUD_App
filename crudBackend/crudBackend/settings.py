@@ -96,7 +96,7 @@ DATABASES = {
         'NAME': 'crudDatabase',
         'USER': 'postgres',
         'PASSWORD': '12182454',
-        'HOST': 'localhost',  
+        'HOST': 'db',  
         'PORT': '5432',       
     }
 }
