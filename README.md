@@ -33,9 +33,9 @@ This project implements a to-do list application with AI capabilities to manage 
 
 #### Docker
 
-1. Add your Google API key to the 'views.py' file in the 'crudApp' folder.
-2. Navigate to the main directory and run 'docker-compose build'.
-3. Run the 'docker-compose up -d' to start the docker container.
+1. Add your Google API key to the `views.py` file in the `crudApp` folder.
+2. Navigate to the main directory and run `docker-compose build`.
+3. Run the `docker-compose up -d` to start the docker container.
 
 ### API Documentation
 
