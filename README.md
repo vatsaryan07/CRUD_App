@@ -25,11 +25,17 @@ This project implements a to-do list application with AI capabilities to manage 
 
 #### How to Use
 
-1. Add your Google API key to the `views.py` file in the `crudApp` folder (to be replaced by an environment file soon).
+1. Add your Google API key to the `views.py` file in the `crudApp` folder.
 2. Run `npm install` in the `crudfrontend` folder.
 3. Create a Conda environment (or any virtual environment) in `crudBackend` using the `requirements.txt`.
 4. Run the server using `python manage.py runserver`.
 5. Run the frontend using `npm start`.
+
+#### Docker
+
+1. Add your Google API key to the 'views.py' file in the 'crudApp' folder.
+2. Navigate to the main directory and run 'docker-compose build'.
+3. Run the 'docker-compose up -d' to start the docker container.
 
 ### API Documentation
 
